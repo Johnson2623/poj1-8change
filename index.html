@@ -54,10 +54,12 @@ function halt(){cancelAnimationFrame(frame);running=false}
 function tick(now){if(!running)return;if(last)p=Math.min(1,p+(now-last)/Number($('speed').value));last=now;paint();if(p<1)frame=requestAnimationFrame(tick);else{randomizeWords();choose(selected)}}
 function play(){cancelAnimationFrame(frame);running=true;last=0;frame=requestAnimationFrame(tick)}
 function fixedPath(w){
- if(w.u===4)return '';
- if(w.u===2)return path(firstCurve({t:2}).map((n,i)=>i%2?n:n+340));
- if(w.u===5){const cx=515,cy=202,a=[420,249.5,515,154.5,610,249.5].map((n,i)=>{const center=i%2?cy:cx;return center+(n-center)*.875});return `M ${a[0]} ${a[1]} L ${a[2]} ${a[3]} L ${a[4]} ${a[5]}`}
- return path(curve(w.u,420));
+ const tone=detectTone(w.b);
+ if(tone===1||tone===4)return '';
+ if(tone===5){const cx=515,cy=202,a=[420,249.5,515,154.5,610,249.5].map((n,i)=>{const center=i%2?cy:cx;return center+(n-center)*.875});return `M ${a[0]} ${a[1]} L ${a[2]} ${a[3]} L ${a[4]} ${a[5]}`}
+ // Use the same original tone-symbol geometry as the first syllable,
+ // translated to the second column; the final syllable keeps its tone.
+ return path(firstCurve({t:tone}).map((n,i)=>i%2?n+(tone===8?66:0):n+340));
 }
 function syncWordButtons(){for(const rowId of ['words','practiceWords'])[...$(rowId).children].slice(0,words.length).forEach((b,j)=>b.setAttribute('aria-pressed',j===selected))}
 function choose(i,mode=activeMode==='practice'?'practice':'animation'){halt();selected=i;p=0;tab(mode);const w=words[i];syncWordButtons();$('poj').className='poj poj-double';$('lastLabel').textContent=w.b;$('original').setAttribute('d',w.t===4||w.t===8?'':w.t===5?roofPath(107):path(firstCurve(w)));$('fixed').setAttribute('d',fixedPath(w));$('firstTone').textContent=`第 ${w.t} 調 → 第 ${w.to} 調`;$('lastTone').textContent=`第 ${w.u} 調（不變）`;$('graphDesc').textContent=`${w.h}：第一字第${w.t}調變為第${w.to}調，第二字第${w.u}調保持不變。`;paint();play()}
